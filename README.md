@@ -2,228 +2,103 @@
 
 ## **Objective:**
 
--   Analyze AQI time series data to identify underlying patterns, trends, and seasonality.
+Implement soft clustering on a dataset of music tracks to identify distinct groups based on their musical attributes.
 
--   Apply ARIMA models to forecast future AQI values.
-
--   Explore and apply detrending methods to examine the time series data without its trend component.
-
--   Investigate the seasonality in the data, understanding how AQI values change over different times of the year.
-
-### **Prerequisites:**
-
--   **Software and Libraries:** Ensure Python, Jupyter Notebook, and necessary libraries (**`pandas`**, **`matplotlib`**, **`statsmodels`**, **`pmdarima`**) are installed.
-
--   **Datasets:** Access to the provided dataset with **`date`** and **`aqi_value`** columns, among others, to perform the analysis.
-
-### **Key Concepts:**
-
-#### Time Series Analysis
-
--   **Time Series Data:** Data points collected or recorded at specific time intervals.
-
--   **Trend:** The long-term movement in time series data, showing an increase or decrease in the data over time.
-
--   **Seasonality:** Regular patterns or cycles of fluctuations in time series data that occur due to seasonal factors.
-
-#### ARIMA Modeling
-
--   [**ARIMA**](https://en.wikipedia.org/wiki/Autoregressive_integrated_moving_average) **(AutoRegressive Integrated Moving Average):** A popular statistical method for time series forecasting that captures different aspects of the data, including trend and seasonality.
-
--   **Parameters (p, d, q):**
-
-    -   **`p`**: The number of lag observations included in the model (AR part).
-
-    -   **`d`**: The degree of differencing required to make the time series stationary.
-
-    -   **`q`**: The size of the moving average window (MA part).
-
-#### Stationarity and Differencing
-
--   **Stationarity:** A characteristic of a time series whose statistical properties (mean, variance) do not change over time.
-
--   **Differencing:** A method of transforming a time series to make it stationary by subtracting the previous observation from the current observation.
-
-#### Detrending
-
--   **Detrending:** The process of removing the trend component from a time series to analyze the cyclical and irregular components.
-
-#### Seasonality Analysis
-
--   **Seasonal Decompose:** A method to separate out the seasonal component from the time series data, allowing for analysis of specific patterns that repeat over fixed periods.
+**Prerequisites:** Ensure you have Python, Jupyter Notebook, and the required libraries (**`pandas`**, **`numpy`**, **`scikit-learn`**, **`matplotlib`**, **`seaborn`**) installed. The dataset `taylor_album_songs.csv` should be available in the **`data`** directory.
 
 ## Dataset:
 
-The data this week comes from the EPA's measurements on air quality for Tucson, AZ core-based statistical area (CBSA) for 2022.
+Since [The Eras Tour Film](https://www.tstheerastourfilm.com/) was just released, this week we're exploring Taylor Swift song data!
 
-We'll use the dataset: `ad_aqi_tracker_data-2023.csv`, which includes daily observations on air quality, along with multi-year averages.
+Are you Ready for It?
 
-### Metadata for `ad_aqi_tracker_data-2023.csv`**:**
+The [taylor](https://taylor.wjakethompson.com/) R package from W. Jake Thompson is a curated data set of Taylor Swift songs, including lyrics and audio characteristics. The data comes from Genius and the Spotify API.
 
-| Variable             | Class     | Description                          |
-|----------------------|-----------|--------------------------------------|
-| **`Date`**           | DateTime  | Date of observation                  |
-| `AQI Values`         | int       | Air quality index reading            |
-| **`Main Pollutant`** | character | Primary pollutant at time of reading |
-| **`Site Name`**      | character | Name of collection site              |
-| `Site ID`            | character | ID of collection site                |
-| **`Source`**         | double    | Data source                          |
+There are three main datasets.
 
-***Note**: You will have to change the data type for some columns to match the above.*
+> The first is taylor_album_songs, which includes lyrics and audio features from the Spotify API for all songs on Taylor's official studio albums. Notably this excludes singles released separately from an album (e.g., Only the Young, Christmas Tree Farm, etc.), and non-Taylor-owned albums that have a Taylor-owned alternative (e.g., Fearless is excluded in favor of Fearless (Taylor's Version)). We stan artists owning their own songs.
 
-(Source: <https://www.airnow.gov/aqi-basics>)
+> You can access Taylor's entire discography with taylor_all_songs. This includes all of the songs in taylor_album_songs plus EPs, individual singles, and the original versions of albums that have been re-released as Taylor's Version.
+
+> Finally, there is a small data set, taylor_albums, summarizing Taylor's album release history.
+
+Information on the audio features in the dataset from Spotify are included in their [API documentation](https://developer.spotify.com/documentation/web-api/reference/get-audio-features).
+
+For your visualizations, the {taylor} package comes with it's own class of color palettes, inspired by the work of Josiah Parry in the [{cpcinema}](https://github.com/JosiahParry/cpcinema) package.
+
+You might also be interested in the [tayoRswift package](https://asteves.github.io/tayloRswift/) by Alex Stephenson, a ggplot2 color palette based on Taylor Swift album covers. "For when your colors absolutely should not be excluded from the narrative."
+
+### Metadata for ``` taylor_album_songs``.csv ```**:**
+
+| variable              | class     | description                                                                                                                                                                                                                                                                                                     |
+|:--------------------------|:-----------------|:--------------------------|
+| `album_name`          | character | Album name                                                                                                                                                                                                                                                                                                      |
+| `ep`                  | logical   | Is it an EP                                                                                                                                                                                                                                                                                                     |
+| `album_release`       | double    | Album release date                                                                                                                                                                                                                                                                                              |
+| `track_number`        | integer   | Track number                                                                                                                                                                                                                                                                                                    |
+| `track_name`          | character | Track name                                                                                                                                                                                                                                                                                                      |
+| `artist`              | character | Artists                                                                                                                                                                                                                                                                                                         |
+| `featuring`           | character | Artists featured                                                                                                                                                                                                                                                                                                |
+| `bonus_track`         | logical   | Is it a bonus track                                                                                                                                                                                                                                                                                             |
+| `promotional_release` | double    | Date of promotional release                                                                                                                                                                                                                                                                                     |
+| `single_release`      | double    | Date of single release                                                                                                                                                                                                                                                                                          |
+| `track_release`       | double    | Date of track release                                                                                                                                                                                                                                                                                           |
+| `danceability`        | double    | Spotify danceability score. A value of 0.0 is least danceable and 1.0 is most danceable.                                                                                                                                                                                                                        |
+| `energy`              | double    | Spotify energy score. Energy is a measure from 0.0 to 1.0 and represents a perceptual measure of intensity and activity.                                                                                                                                                                                        |
+| `key`                 | integer   | The key the track is in.                                                                                                                                                                                                                                                                                        |
+| `loudness`            | double    | Spotify loudness score. The overall loudness of a track in decibels (dB). Loudness values are averaged across the entire track.                                                                                                                                                                                 |
+| `mode`                | integer   | Mode indicates the modality (major or minor) of a track, the type of scale from which its melodic content is derived. Major is represented by 1 and minor is 0.                                                                                                                                                 |
+| `speechiness`         | double    | Spotify speechiness score. Speechiness detects the presence of spoken words in a track. The more exclusively speech-like the recording (e.g. talk show, audio book, poetry), the closer to 1.0 the attribute value.                                                                                             |
+| `acousticness`        | double    | Spotify acousticness score. A confidence measure from 0.0 to 1.0 of whether the track is acoustic. 1.0 represents high confidence the track is acoustic.                                                                                                                                                        |
+| `instrumentalness`    | double    | Spotify instrumentalness score. Predicts whether a track contains no vocals. The closer the instrumentalness value is to 1.0, the greater likelihood the track contains no vocal content. Values above 0.5 are intended to represent instrumental tracks, but confidence is higher as the value approaches 1.0. |
+| `liveness`            | double    | Spotify liveness score. Detects the presence of an audience in the recording. Higher liveness values represent an increased probability that the track was performed live. A value above 0.8 provides strong likelihood that the track is live.                                                                 |
+| `valence`             | double    | Spotify valence score. A measure from 0.0 to 1.0 describing the musical positiveness conveyed by a track. Tracks with high valence sound more positive (e.g. happy, cheerful, euphoric), while tracks with low valence sound more negative (e.g. sad, depressed, angry).                                        |
+| `tempo`               | double    | The overall estimated tempo of a track in beats per minute (BPM). In musical terminology, tempo is the speed or pace of a given piece and derives directly from the average beat duration.                                                                                                                      |
+| `time_signature`      | integer   | An estimated time signature. The time signature (meter) is a notational convention to specify how many beats are in each bar (or measure). The time signature ranges from 3 to 7 indicating time signatures of "3/4", to "7/4".                                                                                 |
+| `duration_ms`         | integer   | The duration of the track in milliseconds.                                                                                                                                                                                                                                                                      |
+| `explicit`            | logical   | Does the track have explicit lyrics.                                                                                                                                                                                                                                                                            |
+| `key_name`            | character | The key the track is in. Integers map to pitches using standard Pitch Class notation. E.g. 0 = C, 1 = C♯/D♭, 2 = D, and so on. If no key was detected, the value is -1.                                                                                                                                         |
+| `mode_name`           | character | Modality of the track.                                                                                                                                                                                                                                                                                          |
+| `key_mode`            | character | The key of the track.                                                                                                                                                                                                                                                                                           |
+| `lyrics`              | list      | Track lyrics. These values are all NA. To get the lyrics in nested tibbles, `install.packages("taylor")` and use the source data.                                                                                                                                                                               |
+
+(Source: [TidyTuesday](https://github.com/rfordatascience/tidytuesday/tree/master/data/2023/2023-10-17){.uri})
 
 ## **Question:**
 
-How can we apply ARIMA modeling to forecast future Air Quality Index (AQI) values based on historical data, and what insights can be gained from detrending and analyzing the seasonality in AQI time series data?
+How can Gaussian Mixture Models (GMM) be applied to identify and interpret distinct musical clusters based on Spotify's track attributes, and what insights can be derived about the relationships and differences between these clusters?
 
 ## **Step 1: Setup and Data Preprocessing**
 
-1.  Load the dataset into a pandas DataFrame.
+1.  Load the dataset using **`pandas`**.
 
-2.  Convert the **`date`** column to datetime format and set it as the index of the DataFrame.
+2.  Select relevant features for clustering (**`danceability`**, **`energy`**, **`loudness`**, **`speechiness`**, **`acousticness`**, **`instrumentalness`**, **`liveness`**, **`valence`**, **`tempo`**).
 
-3.  Convert the `aqi_value` column as needed.
+3.  Normalize the selected features to have the same scale.
 
-4.  Plot the **`aqi_value`** time series to visually inspect the data.
+## **Step 2:** Implement Gaussian Mixture Model (GMM)
 
-```{python}
-import pandas as pd
-import matplotlib.pyplot as plt
-from skimpy import clean_columns
+1.  Import **`GaussianMixture`** from **`sklearn.mixture`**.
 
-# Load the dataset
-df = pd.read_csv('path_to_your_file.csv')
+2.  Determine the optimal number of components (clusters) using a criterion like the Bayesian Information Criterion (BIC) or Akaike Information Criterion (AIC).
 
-# Clean column names
-df = clean_columns(df)
+3.  Fit the GMM to the data.
 
-# Assign and remove NAs
-df.replace({'.': np.nan, '': np.nan}, inplace = True)
-df.dropna(inplace=True)
+## **Step 3:** Analysis and Visualization
 
-# Convert 'date' to datetime and set as index
-df['date'] = pd.to_datetime(df['date'])
-df.set_index('date', inplace = True)
+1.  Predict the soft assignments of the samples to the clusters.
 
-# Plot the AQI values
-df['aqi_value'].plot(title = 'AQI Time Series')
-plt.ylabel('AQI Value')
-plt.show()
-```
+2.  Visualize the clusters using a dimensionality reduction technique like PCA (Principal Component Analysis) to reduce the data to two dimensions for plotting.
 
-## **Step 2: Time Series Decomposition**
+3.  Analyze the characteristics of each cluster by examining the cluster centers.
 
-1.  Use **`seasonal_decompose`** from the **`statsmodels`** package to decompose the time series into trend, seasonal, and residual components.
+## **Step 4:** Discussion
 
-2.  Plot the decomposed components to understand the underlying patterns.
+1.  Discuss the interpretation of each cluster based on their centroids.
 
-```{python}
-from statsmodels.tsa.seasonal import seasonal_decompose
+2.  Explore how different numbers of clusters affect the BIC/AIC and the cluster interpretation.
 
-# Decompose the time series
-decomposition = seasonal_decompose(df['aqi_value'], model = 'additive')
-
-# Plot the decomposed components
-decomposition.plot()
-plt.show()
-```
-
-## **Part 3: Testing for Stationarity**
-
-1.  Perform an [Augmented Dickey-Fuller](https://en.wikipedia.org/wiki/Augmented_Dickey%E2%80%93Fuller_test) (ADF) test to check the stationarity of the time series.
-
-2.  If the series is not stationary, apply differencing to make it stationary.
-
-```{python}
-from statsmodels.tsa.stattools import adfuller
-
-# Perform Augmented Dickey-Fuller test
-result = adfuller(df['aqi_value'])
-print('ADF Statistic: %f' % result[0])
-print('p-value: %f' % result[1])
-
-# Interpretation
-if result[1] > 0.05:
-    print("Series is not stationary")
-else:
-    print("Series is stationary")
-```
-
-## **Step 4: ARIMA Model**
-
-1.  Use the **`auto_arima`** function from the **`pmdarima`** package to identify the optimal parameters (p,d,q) for the ARIMA model.
-
-2.  Fit an ARIMA model with the identified parameters.
-
-3.  Plot the original vs. fitted values to assess the model's performance.
-
-```{python}
-from pmdarima import auto_arima
-
-# Identify the optimal ARIMA model
-auto_model = auto_arima(df['aqi_value'], start_p = 1, start_q = 1,
-                        test = 'adf',         # use adftest to find optimal 'd'
-                        max_p = 3, max_q = 3, # maximum p and q
-                        m = 1,                # frequency of series
-                        d = None,             # let model determine 'd'
-                        seasonal = False,     # No Seasonality
-                        start_P = 0, 
-                        D = 0, 
-                        trace = True,
-                        error_action = 'ignore',  
-                        suppress_warnings = True, 
-                        stepwise = True)
-
-print(auto_model.summary())
-
-# Fit ARIMA model
-model = auto_model.fit(df['aqi_value'])
-
-# Plot original vs fitted values
-df['fitted'] = model.predict_in_sample()
-df[['aqi_value', 'fitted']].plot(title='Original vs. Fitted Values')
-plt.show()
-```
-
-## **Part 5: Forecasting**
-
-1.  Forecast AQI values for the next 30 days using the fitted ARIMA model.
-
-2.  Plot the forecasted values alongside the historical data to visualize the forecast.
-
-```{python}
-# Forecast the next 30 days
-forecast, conf_int = model.predict(n_periods = 30, return_conf_int = True)
-
-# Plot the forecast
-plt.figure(figsize = (8, 6))
-plt.plot(df.index, df['aqi_value'], label = 'Historical')
-plt.plot(pd.date_range(df.index[-1], periods = 31, closed = 'right'), forecast, label='Forecast')
-plt.fill_between(pd.date_range(df.index[-1], periods = 31, closed = 'right'), conf_int[:, 0], conf_int[:, 1], color = 'red', alpha = 0.3)
-plt.title('AQI Forecast')
-plt.legend()
-plt.show()
-```
-
-## **Part 6: Detrending and Seasonality Analysis**
-
-1.  Explore different detrending methods (e.g., subtracting a moving average, polynomial detrending) using the **`detrend_aqi`** and **`poly_trend`** columns.
-
-2.  Analyze seasonality patterns in the detrended data.
-
-```{python}
-# Detrending using moving average
-df['moving_avg'] = df['aqi_value'].rolling(window = 12).mean()
-df['detrended'] = df['aqi_value'] - df['moving_avg']
-
-# Plot detrended data
-df[['detrended']].plot(title='Detrended AQI Time Series')
-plt.show()
-
-# Assuming seasonality was identified, you can further analyze it,
-# for example, by averaging detrended values by month or another relevant period.
-```
+3.  Consider the implications of soft clustering vs. hard clustering in the context of music tracks.
 
 ## **Submission:**
 
